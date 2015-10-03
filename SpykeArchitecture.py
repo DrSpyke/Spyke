@@ -46,7 +46,8 @@ class neuron(object):
         
     def update(self,I):
        ## iterate over each time step
-        
+        if self.spike == True:
+            self.spike = False
         if self.time > self.t_rest:
             self.Vm= self.Vm + (-self.Vm + I*self.Rm) / self.tau_m *self.dt
         if self.Vm >= self.Vth:
