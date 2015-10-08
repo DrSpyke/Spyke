@@ -10,7 +10,7 @@ the Free Software Foundation; either version 3 of the License, or
 any later version.
 @author: Corey
 """
-from Spyke import *
+from SpykeArchitecture import *
 
 L = layer(100,0.1) # 100 neurons with a maximum connection weight of 0.1
 recordIdx = {}
@@ -18,6 +18,10 @@ recordTimes = {}
 recordNeurons = {}
 for l in xrange(len(L.neurons)):
     recordNeurons[l] = list()
+w = np.zeros((100,100))
+for el in xrange(100):
+    for el2 in xrange(100):
+        w[el,el2] = L.cnxns.weights[el,el2]  # original weights
 for l in xrange(50):
     L.update(10.0)  # global drive  = 10.0
     fired = []
@@ -27,3 +31,4 @@ for l in xrange(50):
             recordNeurons[num_n].append(n.time)
     recordIdx[l] = fired # dictionary of neurons that have fired, indexed by time index.
     recordTimes[n.time] = fired
+    L.cnxns.update(recordTimes,n.time,n.dt,6.25,learning_rule = 'STDP', params = [0.1,1.0,0.5])
