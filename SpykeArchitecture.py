@@ -1,4 +1,5 @@
-# -*- coding: utf-8 -*-
+
+  # -*- coding: utf-8 -*-
 """
 Created on Mon Sep 28 01:45:58 2015
 @author: Corey Hart
@@ -9,16 +10,19 @@ any later version.
 """
 
 import numpy as np
+import pylab as pl
 
 class connection(object):
     #weights = np.array()
     def __init__(self,size,scale):
         self.weights = scale*np.random.rand(size,size)
         
-    def update(self,history,currenttime,timestep,learning_rule = 'STDP', params = [0.1,1.0]):
+    def update(self,history,currenttime,timestep,stepmax,learning_rule = 'STDP', params = [0.01,1.0,0.5]):
         if learning_rule == 'STDP':
-            self.weights[history[currenttime],history[currenttime - timestep]] += np.exp(-1.0*(currenttime - timestep))
-            
+            for t in pl.frange(timestep,stepmax,timestep):
+                if t < currenttime:
+                    print history[currenttime],history[currenttime - t]
+                    self.weights[np.array(history[currenttime],int).reshape((-1,1)),np.array(history[currenttime - t],int)] +=  params[0]*np.exp(-params[1]*(currenttime - timestep))
             
 class neuron(object):
     
@@ -68,6 +72,7 @@ class layer(object):
         for l in xrange(N):
             self.neurons.append(neuron(0,0))
             self.cnxns = connection(N,weightscale)
+            
     def update(self,I_init):
         
         for nn,ne in enumerate(self.neurons):
