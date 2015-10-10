@@ -1,5 +1,5 @@
 
-  # -*- coding: utf-8 -*-
+ # -*- coding: utf-8 -*-
 """
 Created on Mon Sep 28 01:45:58 2015
 @author: Corey Hart
@@ -17,13 +17,28 @@ class connection(object):
     def __init__(self,size,scale):
         self.weights = scale*np.random.rand(size,size)
         
-    def update(self,history,currenttime,timestep,stepmax,learning_rule = 'STDP', params = [0.01,1.0,0.5]):
+    def update(self,history,currenttime,timestep,stepmax,params,learning_rule = 'STDP',neurons = None):
         if learning_rule == 'STDP':
             for t in pl.frange(timestep,stepmax,timestep):
                 if t < currenttime:
                     print history[currenttime],history[currenttime - t]
                     self.weights[np.array(history[currenttime],int).reshape((-1,1)),np.array(history[currenttime - t],int)] +=  params[0]*np.exp(-params[1]*(currenttime - timestep))
-            
+        ### GLOBAL REINFORCEMENT CODE UNDER DEVELOPMENT
+        if learning_rule == 'STDP_GLOBAL_REINFORCEMENT': #STDP with a global reinforcement signal, a la Florian 2005
+            beta, delta,tau = params
+            #loop through all neurons
+            eta = np.zeros((len(neurons),len(neurons)))
+            sigma = []
+            for num_n,n in neurons:
+                sigma.append(delta*np.exp(beta*(n.Vm - n.Vth)))
+                for num_m,m in enumerate(neurons):
+                    eta[num_n,num_m] += 0  #
+            for t in pl.frange(timestep,stepmax,timestep): # see
+                if t < currenttime:
+                    print history[currenttime],history[currenttime - t]
+                    self.weights[np.array(history[currenttime],int).reshape((-1,1)),np.array(history[currenttime - t],int)] += gamma*r[currenttime]*z[i,j,currenttime]
+        
+
 class neuron(object):
     
     def __init__(self,Vm,initAct):
