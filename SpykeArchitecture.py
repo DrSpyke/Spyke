@@ -1,5 +1,5 @@
 
- # -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 """
 Created on Mon Sep 28 01:45:58 2015
 @author: Corey Hart
@@ -11,6 +11,8 @@ any later version.
 
 import numpy as np
 import pylab as pl
+import os,binascii
+from SpykeUtils import utils as su
 
 class connection(object):
     #weights = np.array()
@@ -60,9 +62,14 @@ class neuron(object):
         self.act = initAct
         self.spike = False;
         ## Stimulus 
-        self.I       = 1.5                 # input current (A)
-
-
+        self.I       = 1.5                 # input current (A) 
+        self.id = binascii.b2a_hex(os.urandom(15)) 
+        while self.id in su.gKeyStore:
+            self.id = binascii.b2a_hex(os.urandom(15)) 
+        self.report(self.id) #  reports key to database
+        
+    def report(self,id):
+        su.gKeyStore.append(id)
         
     def update(self,I):
        ## iterate over each time step
