@@ -10,7 +10,7 @@ the Free Software Foundation; either version 3 of the License, or
 any later version.
 @author: Corey Hart
 """
-from Spyke import *
+from SpykeArchitecture import *
 
 
 L = layer(100,0.1) # 100 neurons with a maximum connection weight of 0.1
