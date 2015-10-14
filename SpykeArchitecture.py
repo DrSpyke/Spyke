@@ -28,7 +28,9 @@ class connection(object):
                     self.weights[np.array(history[currenttime],int).reshape((-1,1)),np.array(history[currenttime - t],int)] +=  params[0]*np.exp(-params[1]*(currenttime - timestep))
         ###
         #STDP with a global reinforcement signal, a la Florian 2005
-        ### GLOBAL REINFORCEMENT CODE UNDER DEVELOPMENT
+        # GLOBAL REINFORCEMENT CODE UNDER DEVELOPMENT
+        # Need to vectorize this next!!!!
+        ###
         if learning_rule == 'STDP_GLOBAL_REINFORCEMENT': 
             beta, gamma,tau,tau_sigma = params
             neurons.sort()
