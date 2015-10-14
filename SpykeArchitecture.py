@@ -12,6 +12,7 @@ any later version.
 import numpy as np
 import pylab as pl
 import os,binascii
+import multiprocessing as mp
 from SpykeUtils import utils as su
 
 class connection(object):
@@ -19,27 +20,43 @@ class connection(object):
     def __init__(self,size,scale):
         self.weights = scale*np.random.rand(size,size)
         
-    def update(self,history,currenttime,timestep,stepmax,params,learning_rule = 'STDP',neurons = None):
+    def update(self,history,currenttime,timestep,stepmax,params,learning_rule = 'STDP',neurons = None,reward = None):
         if learning_rule == 'STDP':
             for t in pl.frange(timestep,stepmax,timestep):
                 if t < currenttime:
                     print history[currenttime],history[currenttime - t]
                     self.weights[np.array(history[currenttime],int).reshape((-1,1)),np.array(history[currenttime - t],int)] +=  params[0]*np.exp(-params[1]*(currenttime - timestep))
+        ###
+        #STDP with a global reinforcement signal, a la Florian 2005
         ### GLOBAL REINFORCEMENT CODE UNDER DEVELOPMENT
-        if learning_rule == 'STDP_GLOBAL_REINFORCEMENT': #STDP with a global reinforcement signal, a la Florian 2005
-            beta, delta,tau = params
+        if learning_rule == 'STDP_GLOBAL_REINFORCEMENT': 
+            beta, gamma,tau,tau_sigma = params
+            neurons.sort()
             #loop through all neurons
-            eta = np.zeros((len(neurons),len(neurons)))
+            eta = np.zeros(np.shape(self.weights))
+            z =   np.zeros(np.shape(self.weights))
             sigma = []
-            for num_n,n in neurons:
-                sigma.append(delta*np.exp(beta*(n.Vm - n.Vth)))
-                for num_m,m in enumerate(neurons):
-                    eta[num_n,num_m] += 0  #
-            for t in pl.frange(timestep,stepmax,timestep): # see
-                if t < currenttime:
-                    print history[currenttime],history[currenttime - t]
-                    self.weights[np.array(history[currenttime],int).reshape((-1,1)),np.array(history[currenttime - t],int)] += gamma*r[currenttime]*z[i,j,currenttime]
-        
+            for num_n,n in enumerate(neurons):
+                ss = (n.dt/tau_sigma)*np.exp(beta*(n.Vm - n.Vth))
+                if ss < 1:
+                    sigma.append(ss)
+                else:
+                    sigma.append(0.99)
+                if n.spike == True:
+                    for num_m,m in enumerate(neurons):
+                        for k in xrange(int(currenttime/n.dt)):  
+                            eta[num_n,num_m] += beta*np.exp(-( (k-1)*n.dt/tau  ))  #
+                            self.weights[num_n,num_m] += gamma*reward*z[num_n,num_m]
+                            self.weights[num_m,num_n] -= gamma*reward*z[num_m,num_n]
+                            z[num_n,num_m] = beta*z[num_n,num_m] + eta[num_n,num_m]
+                else:
+                    for num_m,m in enumerate(neurons):
+                        for k in xrange(int(currenttime/n.dt)):
+                            eta[num_n,num_m] -= ((beta*sigma[num_n]/(1 - sigma[num_n])))*np.exp(-( (k-1)*n.dt/tau  ))
+                            self.weights[num_n,num_m] += gamma*reward*z[num_n,num_m]
+                            self.weights[num_m,num_n] -= gamma*reward*z[num_m,num_n]
+                            z[num_n,num_m] = beta*z[num_n,num_m] + eta[num_n,num_m]
+                
 
 class neuron(object):
     
@@ -89,11 +106,14 @@ class neuron(object):
         
 class layer(object):
     
-    def __init__(self, N,weightscale):
+    def __init__(self, N,weightscale,multip = False):
         self.neurons = []
         for l in xrange(N):
             self.neurons.append(neuron(0,0))
-            self.cnxns = connection(N,weightscale)
+        self.cnxns = connection(N,weightscale)
+        """if multip == True:
+            p = mp.Pool(neuron(0,0))
+            self.neurons = p"""
             
     def update(self,I_init):
         
