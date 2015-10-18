@@ -15,22 +15,42 @@ import os,binascii
 import multiprocessing as mp
 from SpykeUtils import utils as su
 
+
+class networks(object):
+    def __init__(self,nnvec,pscvec,scvec,occupancy):
+        self.layers = []
+        self.projections = projection(2)
+        for l,numNeurons in enumerate(nnvec):
+            self.layers.append(layer(numNeurons,scvec[l]))
+            for m,numNeurons2 in enumerate(nnvec):
+                if m != l and occupancy[l,m] == 1:
+                    projections.populate(m,l,numNeurons,pscvec)
+
+class projection(object):
+    #weights = np.array()
+    def __init__(self,size):
+        self.weights = []
+        for j in xrange(size):
+            for k in xrange(size):
+                self.weights.append([])
+    def populate(idx1,idx2,size,scalevec):
+        index = idx1*(size) + idx2
+        self.weights[index] = scalevec*np.random.rand()
+   
 class connection(object):
     #weights = np.array()
     def __init__(self,size,scale):
+        
         self.weights = scale*np.random.rand(size,size)
         
     def update(self,history,currenttime,timestep,stepmax,params,learning_rule = 'STDP',neurons = None,reward = None):
         if learning_rule == 'STDP':
             for t in pl.frange(timestep,stepmax,timestep):
                 if t < currenttime:
-                    print history[currenttime],history[currenttime - t]
                     self.weights[np.array(history[currenttime],int).reshape((-1,1)),np.array(history[currenttime - t],int)] +=  params[0]*np.exp(-params[1]*(currenttime - timestep))
         ###
         #STDP with a global reinforcement signal, a la Florian 2005
-        # GLOBAL REINFORCEMENT CODE UNDER DEVELOPMENT
-        # Need to vectorize this next!!!!
-        ###
+        ### GLOBAL REINFORCEMENT CODE UNDER DEVELOPMENT
         if learning_rule == 'STDP_GLOBAL_REINFORCEMENT': 
             beta, gamma,tau,tau_sigma = params
             neurons.sort()
@@ -79,6 +99,7 @@ class neuron(object):
         self.Vth     = 0.8                 # spike threshold (V)
         self.V_spike = 0.5                 # spike delta (V)
         self.act = initAct
+        self.noise_amp = 0.05
         self.spike = False;
         ## Stimulus 
         self.I       = 1.5                 # input current (A) 
@@ -92,6 +113,7 @@ class neuron(object):
         
     def update(self,I):
        ## iterate over each time step
+        self.Vm += self.noise_amp*(np.random.rand()-0.5)*2
         if self.spike == True:
             self.spike = False
         if self.time > self.t_rest:
@@ -110,8 +132,10 @@ class layer(object):
     
     def __init__(self, N,weightscale,multip = False):
         self.neurons = []
+        self.features = []
         for l in xrange(N):
             self.neurons.append(neuron(0,0))
+        print N,weightscale
         self.cnxns = connection(N,weightscale)
         """if multip == True:
             p = mp.Pool(neuron(0,0))
@@ -122,9 +146,8 @@ class layer(object):
         for nn,ne in enumerate(self.neurons):
             for nn2 in xrange(len(self.neurons)):
                 ic = ne.spike*self.cnxns.weights[nn2,nn]
-            print ne.Vm,ic
             self.neurons[nn].update(ic + I_init)
             
-        
+   
         
         
