@@ -1,4 +1,3 @@
-
 # -*- coding: utf-8 -*-
 """
 Created on Mon Sep 28 01:45:58 2015
@@ -16,15 +15,17 @@ import multiprocessing as mp
 from SpykeUtils import utils as su
 
 
-class networks(object):
-    def __init__(self,nnvec,pscvec,scvec,occupancy):
-        self.layers = []
-        self.projections = projection(2)
-        for l,numNeurons in enumerate(nnvec):
-            self.layers.append(layer(numNeurons,scvec[l]))
-            for m,numNeurons2 in enumerate(nnvec):
-                if m != l and occupancy[l,m] == 1:
-                    projections.populate(m,l,numNeurons,pscvec)
+def collector(neuronNum,occupancy,netw):
+    N,M = np.shape(occupancy)
+    summedCurrents = np.zeros(N)
+    for n in xrange(N):
+         for m in xrange(M):
+             if occupancy[n,m] == 1:
+                 wts = netw.projections.lookup(n,m,len(netw.layers))
+                 for nn,ne in enumerate(netw.layers[n].neurons):
+                     for nn2,ne2 in enumerate(netw.layers[m].neurons):
+                         summedCurrents[n]+= ne2.spike*wts[nn,nn2] #ic is internal current 
+    return summedCurrents
 
 class projection(object):
     #weights = np.array()
@@ -32,11 +33,27 @@ class projection(object):
         self.weights = []
         for j in xrange(size):
             for k in xrange(size):
-                self.weights.append([])
-    def populate(idx1,idx2,size,scalevec):
+                self.weights.append(0)
+    def populate(self,idx1,idx2,size,scalemat,layers):
         index = idx1*(size) + idx2
-        self.weights[index] = scalevec*np.random.rand()
-   
+        self.weights[index] = scalemat[idx1,idx2]*np.random.rand(len(layers[idx1].neurons),len(layers[idx2].neurons))
+        
+    def lookup(self,idx1,idx2,size):
+        index = idx1*(size) + idx2
+        return self.weights[index]        
+        
+        
+class networks(object):
+    def __init__(self,nnvec,pscvec,scvec,occupancy):
+        self.layers = []
+        self.projections = projection(2)
+        for l,numNeurons in enumerate(nnvec):
+            self.layers.append(layer(numNeurons,scvec[l]))          
+        for l,numNeurons in enumerate(nnvec):           
+            for m,numNeurons2 in enumerate(nnvec):
+                if m != l and occupancy[l,m] == 1:
+                    self.projections.populate(m,l,len(nnvec),pscvec,self.layers)
+
 class connection(object):
     #weights = np.array()
     def __init__(self,size,scale):
@@ -141,12 +158,18 @@ class layer(object):
             p = mp.Pool(neuron(0,0))
             self.neurons = p"""
             
-    def update(self,I_init):
+    def update(self,I_init,extProj = None):
         
         for nn,ne in enumerate(self.neurons):
             for nn2 in xrange(len(self.neurons)):
-                ic = ne.spike*self.cnxns.weights[nn2,nn]
-            self.neurons[nn].update(ic + I_init)
+                ic = ne.spike*self.cnxns.weights[nn2,nn] #ic is internal current   
+            if extProj != None:
+                print "yay"
+                ec = collector(nn,occupancy,netw)
+                self.neurons[nn].update(ic + I_init + ec) # ec is external current
+            else:
+                
+                self.neurons[nn].update(ic + I_init)
             
    
         
