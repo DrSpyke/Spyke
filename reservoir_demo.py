@@ -13,9 +13,9 @@ any later version.
 
 from SpykeArchitecture import *
 from SpykeUtils import *
-
-
-L = layer(30,0.3) # 100 neurons with a maximum connection weight of 0.1
+time_max = 1000
+num_neurons = 50
+L = layer(num_neurons,0.01) # 100 neurons with a maximum connection weight of 0.1
 recordIdx = {}
 recordTimes = {}
 recordNeurons = {}
@@ -25,14 +25,15 @@ for l in range(len(L.neurons)):
     recordNeurons[l] = list()
     
 # store original weight matrix
-w = np.zeros((30,30))
-for el in range(30):
-    for el2 in range(30):
+w = np.zeros((num_neurons,num_neurons))
+for el in range(num_neurons):
+    for el2 in range(num_neurons):
         w[el,el2] = L.cnxns.weights[el,el2]  # original weights
 
 #loop through time index        
-for l in range(100):
-    L.update(10.0)  # global drive  = 10.0
+for l in range(time_max):
+    print(l)
+    L.update(np.random.rand()/10) # global drive  = 10.0
     fired = []
     for num_n,n in enumerate(L.neurons):
         if n.spike == True:

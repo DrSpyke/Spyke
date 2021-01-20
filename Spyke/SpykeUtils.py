@@ -11,7 +11,6 @@ any later version.
 import itertools
 import numpy as np
 import xlrd
-import matplotlib.pyplot as plt
 
 class utils:
     gKeyStore = []
@@ -21,7 +20,7 @@ class utils:
         merged = list(itertools.chain.from_iterable(record.values()))
         f = np.zeros((len(np.unique(merged)),R))
         for r in xrange(R):
-            print(record[r])
+            print record[r]
             f[np.array(record[r],int).reshape((-1,1)),r] = 1
         return f
     
@@ -50,9 +49,3 @@ def open_excel(path,lencols):
     out = np.array(out)
     return out
     
-
-class plots:
-    def raster(times_struct):
-        ###
-        #do nothing
-        return 0
