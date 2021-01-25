@@ -11,7 +11,8 @@ any later version.
 import numpy as np
 import pylab as pl
 import os,binascii
-import multiprocessing as mp
+#import multiprocessing as mp
+import multiprocessing 
 from SpykeUtils import utils as su
 
 
@@ -159,14 +160,17 @@ class layer(object):
         """if multip == True:
             p = mp.Pool(neuron(0,0))
             self.neurons = p"""
-            
+    def findspikes(self,neurons):
+           return neurons.spike
     def update(self,I_init,extProj = None):
         
         for nn,n in enumerate(self.neurons):
             ic = 0
             for nn2,ne in enumerate(self.neurons):
-                ic += ne.spike*self.cnxns.weights[nn2,nn] #ic is internal current 
-            
+               ic += ne.spike*self.cnxns.weights[nn2,nn] #ic is internal current 
+            #a_pool = multiprocessing.Pool()
+            #a_pool.map(self.findspikes,self.neurons )
+            #ic = np.dot(np.array(pooled_spikes),self.cnxns.weights[:,nn])
                 #if ic != 0  and self.neurons[nn].Vm != 0:
                 #    print('%%%%%%%%%%%%%%%%',nn,ic + I_init,self.neurons[nn2].Vm,'############')
             if extProj != None:

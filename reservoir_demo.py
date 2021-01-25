@@ -15,7 +15,7 @@ from SpykeArchitecture import *
 from SpykeUtils import *
 time_max = 1000
 num_neurons = 50
-L = layer(num_neurons,0.01) # 100 neurons with a maximum connection weight of 0.1
+L = layer(num_neurons,0.9) # 100 neurons with a maximum connection weight of 0.1
 recordIdx = {}
 recordTimes = {}
 recordNeurons = {}
